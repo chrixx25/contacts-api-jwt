@@ -85,4 +85,14 @@ module.exports = {
             }
         );
     },
+    getByUserName: (data, callback) => {
+        pool.query(
+            `SELECT * FROM tbl_user WHERE UserName = ? AND Isdeleted = 0`,
+            [data.userName],
+            (error, results, fields) => {
+                if (error) callback(error)
+                return callback(null, results[0])
+            }
+        );
+    }
 }
