@@ -2,10 +2,9 @@ const jwt = require("jsonwebtoken");
 
 module.exports = {
     checkToken: (req, res, next) => {
-        let token = req.get('Authorization');
+        const token = req.get('Authorization');
         if (token) {
-            token = token.slice(7);
-            jwt.verify(token, 'userToken', (err, decoded) => {
+            jwt.verify(token.slice(7), 'userToken', (err, decoded) => {
                 if (err) {
                     return res.status(403).json({
                         message: 'Invalid Token.'

@@ -1,29 +1,36 @@
 const pool = require('../config/database');
 
 module.exports = {
-    get: callback => {
-        pool.query(
-            `SELECT * FROM tbl_user WHERE Isdeleted = 0`,
-            [],
-            (error, results, fields) => {
-                if (error) callback(error)
-                return callback(null, results)
-            }
-        );
+    get: () => {
+        return new Promise((resolve, reject) => {
+            pool.query(
+                `SELECT * FROM tbl_user WHERE Isdeleted = 0`,
+                [],
+                (error, results, fields) => {
+                    if (error)
+                        return reject(error)
+                    return resolve(results)
+                }
+            );
+        });
     },
-    getById: (id, callback) => {
-        pool.query(
-            `SELECT * FROM tbl_user WHERE Id = ? AND Isdeleted = 0`,
-            [id],
-            (error, results, fields) => {
-                if (error) callback(error)
-                return callback(null, results[0])
-            }
-        );
+    getById: (id) => {
+        return new Promise((resolve, reject) => {
+            pool.query(
+                `SELECT * FROM tbl_user WHERE Id = ? AND Isdeleted = 0`,
+                [id],
+                (error, results, fields) => {
+                    if (error)
+                        return reject(error)
+                    return resolve(results[0])
+                }
+            );
+        });
     },
-    create: (data, callback) => {
-        pool.query(
-            `INSERT INTO tbl_user (
+    create: (data) => {
+        return new Promise((resolve, reject) => {
+            pool.query(
+                `INSERT INTO tbl_user (
                 UserName,
                 Password,
                 FirstName,
@@ -32,24 +39,27 @@ module.exports = {
                 Email,
                 MobileNo
             ) VALUE (?,?,?,?,?,?,?)`,
-            [
-                data.userName,
-                data.password,
-                data.firstName,
-                data.middleName,
-                data.lastName,
-                data.email,
-                data.mobileNo
-            ],
-            (error, results, fields) => {
-                if (error) callback(error)
-                return callback(null, results)
-            }
-        );
+                [
+                    data.userName,
+                    data.password,
+                    data.firstName,
+                    data.middleName,
+                    data.lastName,
+                    data.email,
+                    data.mobileNo
+                ],
+                (error, results, fields) => {
+                    if (error)
+                        return reject(error)
+                    return resolve(results[0])
+                }
+            );
+        });
     },
-    update: (id, data, callback) => {
-        pool.query(
-            `UPDATE tbl_user SET
+    update: (id, data) => {
+        return new Promise((resolve, reject) => {
+            pool.query(
+                `UPDATE tbl_user SET
                 UserName = ?,
                 Password = ?,
                 FirstName = ?,
@@ -59,40 +69,49 @@ module.exports = {
                 MobileNo = ?
             WHERE
                 Id = ?`,
-            [
-                data.userName,
-                data.password,
-                data.firstName,
-                data.middleName,
-                data.lastName,
-                data.email,
-                data.mobileNo,
-                id
-            ],
-            (error, results, fields) => {
-                if (error) callback(error)
-                return callback(null, results)
-            }
-        );
+                [
+                    data.userName,
+                    data.password,
+                    data.firstName,
+                    data.middleName,
+                    data.lastName,
+                    data.email,
+                    data.mobileNo,
+                    id
+                ],
+                (error, results, fields) => {
+                    if (error)
+                        return reject(error)
+                    return resolve(results)
+                }
+            );
+        });
     },
-    remove: (id, callback) => {
-        pool.query(
-            `UPDATE tbl_user SET IsDeleted = 1 WHERE Id = ?`,
-            [id],
-            (error, results, fields) => {
-                if (error) callback(error)
-                return callback(null, results)
-            }
-        );
+    remove: (id) => {
+        return new Promise((resolve, reject) => {
+            pool.query(
+                `UPDATE tbl_user SET IsDeleted = 1 WHERE Id = ?`,
+                [id],
+                (error, results, fields) => {
+                    if (error)
+                        return reject(error)
+                    return resolve(results)
+                }
+            );
+        });
     },
-    getByUserName: (data, callback) => {
-        pool.query(
-            `SELECT * FROM tbl_user WHERE UserName = ? AND Isdeleted = 0`,
-            [data.userName],
-            (error, results, fields) => {
-                if (error) callback(error)
-                return callback(null, results[0])
-            }
-        );
+    getByUserName: (data) => {
+        return new Promise((resolve, reject) => {
+            pool.query(
+                `SELECT * FROM tbl_user WHERE UserName = ? AND Isdeleted = 0`,
+                [data.userName],
+                (error, results, fields) => {
+                    if (error)
+                        return reject(error)
+                    return resolve(results[0])
+                }
+            );
+        });
+
     }
 }
