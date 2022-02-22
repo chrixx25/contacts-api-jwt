@@ -14,13 +14,13 @@ const {
     getByUserName
 } = require('../models/user');
 
-const getUser = (req, res, next) => {
+const getUser = async (req, res, next) => {
     let user;
-    getById(req.params.id, (err, results) => {
-        if (err)
-            return res.status(500).json(err);
+    try {
+        const results = await getById(req.params.id);
         if (!results)
-            return res.status(200).json({ message: 'No record found.' });
+            return res.status(404).send('User Not Found.');
+
         const {
             Id,
             UserName,
@@ -42,22 +42,23 @@ const getUser = (req, res, next) => {
             mobileNo: MobileNo
         }
         user = data;
-
         res.user = user;
         next();
-    });
+    } catch (err) {
+        return res.status(500).json(err);
+    }
 }
 
 module.exports = {
-    loginUser: (req, res) => {
+    loginUser: async (req, res) => {
         const { error } = validateLogin(req.body);
         if (error) return res.status(400).send(error.details[0].message);
 
         const body = req.body;
 
-        getByUserName(body, (err, results) => {
-            if (err)
-                return res.status(500).json(err);
+        try {
+            const results = await getByUserName(body);
+
             if (!results)
                 return res.status(401).json({ message: 'Username or Password is incorrect.' });
 
@@ -95,15 +96,13 @@ module.exports = {
                 });
             }
             return res.status(401).json({ message: 'Username or Password is incorrect.' });
-        });
+        } catch (err) {
+            return res.status(500).json(err);
+        }
     },
-    getUsers: (req, res) => {
-        get((err, results) => {
-            if (err)
-                return res.status(500).json(err);
-            if (results.length < 1)
-                return res.status(200).json({ message: 'No record found.' });
-
+    getUsers: async (req, res) => {
+        try {
+            const results = await get();
             const data = results.map(({
                 Id,
                 UserName,
@@ -125,13 +124,14 @@ module.exports = {
                     mobileNo: MobileNo
                 }
             });
-
             return res.status(200).json(data);
-        });
+        } catch (err) {
+            return res.status(500).json({ message: err.message });
+        }
     },
     getUserById: (req, res) => res.status(200).json(res.user),
-    getUser: getUser,
-    createUser: (req, res) => {
+    getUser,
+    createUser: async (req, res) => {
         const { error } = validateUser(req.body);
         if (error) return res.status(400).send(error.details[0].message);
 
@@ -139,13 +139,14 @@ module.exports = {
         const salt = genSaltSync(10);
         body.password = hashSync(body.password, salt);
 
-        create(body, (err, results) => {
-            if (err)
-                return res.status(500).json(err);
+        try {
+            const results = await create(body);
             return res.status(201).json(results);
-        });
+        } catch (err) {
+            return res.status(500).json({ message: err.message });
+        }
     },
-    updateUser: (req, res) => {
+    updateUser: async (req, res) => {
         const { error } = validateUser(req.body);
         if (error) return res.status(400).send(error.details[0].message);
 
@@ -153,17 +154,23 @@ module.exports = {
         const salt = genSaltSync(10);
         body.password = hashSync(body.password, salt);
 
-        update(req.params.id, body, (err, results) => {
-            if (err)
-                return res.status(500).json(err);
-            return res.status(200).json(res.user);
-        });
+        try {
+            const results = await update(req.params.id, body);
+            if (results)
+                return res.status(200).json(res.user);
+            return res.status(400).send('Failed to update.');
+        } catch (err) {
+            return res.status(500).json({ message: err.message });
+        }
     },
-    removeUser: (req, res) => {
-        remove(req.params.id, (err, results) => {
-            if (err)
-                return res.status(500).json(err);
-            return res.status(201).json(results);
-        });
+    removeUser: async (req, res) => {
+        try {
+            const results = await remove(req.params.id);
+            if (results)
+                return res.status(200).json(`${res.user.UserName} sucessfully deleted.`);
+            return res.status(400).send('Failed to delete.');
+        } catch (err) {
+            return res.status(500).json({ message: err.message });
+        }
     }
 }
