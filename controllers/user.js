@@ -53,7 +53,7 @@ const getUser = async (req, res, next) => {
 module.exports = {
     loginUser: async (req, res) => {
         const { error } = validateLogin(req.body);
-        if (error) return res.status(400).send(error.details[0].message);
+        if (error) return res.status(400).send({ message: error.details[0].message });
 
         const body = req.body;
 
@@ -89,7 +89,6 @@ module.exports = {
                     expiresIn: "1h"
                 });
                 return res.status(200).json({
-                    success: 1,
                     message: "login successfully",
                     token: jsontoken
                 });
@@ -132,18 +131,19 @@ module.exports = {
     getUser,
     createUser: async (req, res) => {
         const { error } = validateUser(req.body);
-        if (error) return res.status(400).send(error.details[0].message);
+        if (error) return res.status(400).send({ message: error.details[0].message });
 
         const body = req.body;
         const salt = genSaltSync(10);
         body.password = hashSync(body.password, salt);
 
+        const isUserNameMatch = await getByUserName(body);
+        if (isUserNameMatch)
+            return res.status(400).send(`${body.userName} username already exists.`);
         try {
             const results = await create(body);
+            console.log(results)
             if (results) {
-                const isUserNameMatch = await getByUserName(body);
-                if (isUserNameMatch)
-                    return res.status(400).send(`${body.userName} username already exists.`);
                 return res.status(201).send(`${body.firstName} sucessfully created.`);
             }
         } catch (err) {
@@ -152,19 +152,20 @@ module.exports = {
     },
     updateUser: async (req, res) => {
         const { error } = validateUser(req.body);
-        if (error) return res.status(400).send(error.details[0].message);
+        if (error) return res.status(400).send({ message: error.details[0].message });
 
         const body = req.body;
         //const decodedToken = req.decoded; // decoded token
         const salt = genSaltSync(10);
         body.password = hashSync(body.password, salt);
 
+        const isUserNameMatch = await getByUserName(body.userName);
+        if (isUserNameMatch)
+            return res.status(400).send(`${body.userName} username already exists.`);
+
         try {
             const results = await update(req.params.id, body);
             if (results) {
-                const isUserNameMatch = await getByUserName(body);
-                if (isUserNameMatch)
-                    return res.status(400).send(`${body.userName} username already exists.`);
                 return res.status(200).json(res.user);
             }
             return res.status(400).send('Failed to update.');
