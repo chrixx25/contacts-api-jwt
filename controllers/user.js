@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { sign } = require("jsonwebtoken");
 const { genSaltSync, hashSync, compareSync } = require('bcrypt');
 
@@ -52,7 +53,7 @@ const getUser = async (req, res, next) => {
 module.exports = {
     loginUser: async (req, res) => {
         const { error } = validateLogin(req.body);
-        if (error) return res.status(400).send(error.details[0].message);
+        if (error) return res.status(400).send({ message: error.details[0].message });
 
         const body = req.body;
 
@@ -68,7 +69,6 @@ module.exports = {
                 const {
                     Id,
                     UserName,
-                    Password,
                     FirstName,
                     MiddleName,
                     LastName,
@@ -79,18 +79,16 @@ module.exports = {
                     result: {
                         id: Id,
                         userName: UserName,
-                        password: Password,
                         firstName: FirstName,
                         middleName: MiddleName,
                         lastName: LastName,
                         email: Email,
                         mobileNo: MobileNo
                     }
-                }, 'userToken', {
+                }, process.env.TOKEN_NAME, {
                     expiresIn: "1h"
                 });
                 return res.status(200).json({
-                    success: 1,
                     message: "login successfully",
                     token: jsontoken
                 });
@@ -126,51 +124,63 @@ module.exports = {
             });
             return res.status(200).json(data);
         } catch (err) {
-            return res.status(500).json({ message: err.message });
+            return res.status(500).send(err.message);
         }
     },
     getUserById: (req, res) => res.status(200).json(res.user),
     getUser,
     createUser: async (req, res) => {
         const { error } = validateUser(req.body);
-        if (error) return res.status(400).send(error.details[0].message);
+        if (error) return res.status(400).send({ message: error.details[0].message });
 
         const body = req.body;
         const salt = genSaltSync(10);
         body.password = hashSync(body.password, salt);
 
+        const isUserNameMatch = await getByUserName(body);
+        if (isUserNameMatch)
+            return res.status(400).send(`${body.userName} username already exists.`);
         try {
             const results = await create(body);
-            return res.status(201).json(results);
+            console.log(results)
+            if (results) {
+                return res.status(201).send(`${body.firstName} sucessfully created.`);
+            }
         } catch (err) {
-            return res.status(500).json({ message: err.message });
+            return res.status(500).send(err.message);
         }
     },
     updateUser: async (req, res) => {
         const { error } = validateUser(req.body);
-        if (error) return res.status(400).send(error.details[0].message);
+        if (error) return res.status(400).send({ message: error.details[0].message });
 
         const body = req.body;
+        //const decodedToken = req.decoded; // decoded token
         const salt = genSaltSync(10);
         body.password = hashSync(body.password, salt);
 
+        const isUserNameMatch = await getByUserName(body.userName);
+        if (isUserNameMatch)
+            return res.status(400).send(`${body.userName} username already exists.`);
+
         try {
             const results = await update(req.params.id, body);
-            if (results)
+            if (results) {
                 return res.status(200).json(res.user);
+            }
             return res.status(400).send('Failed to update.');
         } catch (err) {
-            return res.status(500).json({ message: err.message });
+            return res.status(500).send(err.message);
         }
     },
     removeUser: async (req, res) => {
         try {
             const results = await remove(req.params.id);
             if (results)
-                return res.status(200).json(`${res.user.UserName} sucessfully deleted.`);
+                return res.status(200).send(`${res.user.UserName} sucessfully deleted.`);
             return res.status(400).send('Failed to delete.');
         } catch (err) {
-            return res.status(500).json({ message: err.message });
+            return res.status(500).send(err.message);
         }
     }
 }

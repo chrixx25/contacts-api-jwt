@@ -43,7 +43,7 @@ module.exports = {
                     data.userName,
                     data.password,
                     data.firstName,
-                    data.middleName,
+                    data.middleName || '',
                     data.lastName,
                     data.email,
                     data.mobileNo
@@ -51,7 +51,7 @@ module.exports = {
                 (error, results, fields) => {
                     if (error)
                         return reject(error)
-                    return resolve(results[0])
+                    return resolve(results)
                 }
             );
         });
@@ -73,7 +73,7 @@ module.exports = {
                     data.userName,
                     data.password,
                     data.firstName,
-                    data.middleName,
+                    data.middleName || '',
                     data.lastName,
                     data.email,
                     data.mobileNo,
