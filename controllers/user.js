@@ -166,7 +166,9 @@ module.exports = {
         try {
             const results = await update(req.params.id, body);
             if (results) {
-                return res.status(200).json(res.user);
+                return res.status(200).json({
+                    ...res.user, ...body
+                });
             }
             return res.status(400).send('Failed to update.');
         } catch (err) {
