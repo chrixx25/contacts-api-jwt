@@ -4,7 +4,9 @@ const { genSaltSync, hashSync, compareSync } = require('bcrypt');
 
 const {
     validateUser,
-    validateLogin
+    validateLogin,
+    validateUpdateUser,
+    validatePassword
 } = require('../utils/validations/userValidations');
 const {
     create,
@@ -12,7 +14,8 @@ const {
     getById,
     update,
     remove,
-    getByUserName
+    getByUserName,
+    updatePassword
 } = require('../models/user');
 
 const getUser = async (req, res, next) => {
@@ -151,14 +154,11 @@ module.exports = {
         }
     },
     updateUser: async (req, res) => {
-        const { error } = validateUser(req.body);
+        const { error } = validateUpdateUser(req.body);
         if (error) return res.status(400).send({ message: error.details[0].message });
 
         const body = req.body;
         //const decodedToken = req.decoded; // decoded token
-        const salt = genSaltSync(10);
-        body.password = hashSync(body.password, salt);
-
         const isUserNameMatch = await getByUserName(body.userName);
         if (isUserNameMatch)
             return res.status(400).send(`${body.userName} username already exists.`);
@@ -166,7 +166,9 @@ module.exports = {
         try {
             const results = await update(req.params.id, body);
             if (results) {
-                return res.status(200).json(res.user);
+                return res.status(200).json({
+                    ...res.user, ...body
+                });
             }
             return res.status(400).send('Failed to update.');
         } catch (err) {
@@ -182,5 +184,23 @@ module.exports = {
         } catch (err) {
             return res.status(500).send(err.message);
         }
-    }
+    },
+    updatePassword: async (req, res) => {
+        const { error } = validatePassword(req.body);
+        if (error) return res.status(400).send({ message: error.details[0].message });
+
+        const body = req.body;
+        const salt = genSaltSync(10);
+        body.password = hashSync(body.password, salt);
+
+        try {
+            const results = await updatePassword(req.params.id, body);
+            if (results) {
+                return res.status(200).json(res.user);
+            }
+            return res.status(400).send('Failed to update.');
+        } catch (err) {
+            return res.status(500).send(err.message);
+        }
+    },
 }

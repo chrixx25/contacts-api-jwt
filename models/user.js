@@ -61,7 +61,6 @@ module.exports = {
             pool.query(
                 `UPDATE tbl_user SET
                 UserName = ?,
-                Password = ?,
                 FirstName = ?,
                 MiddleName = ?,
                 LastName = ?,
@@ -71,7 +70,6 @@ module.exports = {
                 Id = ?`,
                 [
                     data.userName,
-                    data.password,
                     data.firstName,
                     data.middleName || '',
                     data.lastName,
@@ -113,5 +111,18 @@ module.exports = {
             );
         });
 
+    },
+    updatePassword: (id, data) => {
+        return new Promise((resolve, reject) => {
+            pool.query(
+                `UPDATE tbl_user SET Password = ? WHERE Id = ?`,
+                [data.password, id],
+                (error, results, fields) => {
+                    if (error)
+                        return reject(error)
+                    return resolve(results)
+                }
+            );
+        });
     }
 }
