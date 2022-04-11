@@ -1,15 +1,28 @@
 const pool = require('../config/database');
 
 module.exports = {
-    get: () => {
+    get: (paging, limit) => {
         return new Promise((resolve, reject) => {
             pool.query(
-                `SELECT * FROM tbl_user WHERE Isdeleted = 0`,
-                [],
+                `SELECT * FROM tbl_user WHERE Isdeleted = 0 ORDER BY Id LIMIT ?, ?`,
+                [paging, limit],
                 (error, results, fields) => {
                     if (error)
                         return reject(error)
                     return resolve(results)
+                }
+            );
+        });
+    },
+    getTotal: () => {
+        return new Promise((resolve, reject) => {
+            pool.query(
+                `SELECT COUNT(*) total FROM tbl_user WHERE Isdeleted = 0`,
+                [],
+                (error, results, fields) => {
+                    if (error)
+                        return reject(error)
+                    return resolve(results[0])
                 }
             );
         });

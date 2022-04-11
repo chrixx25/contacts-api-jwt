@@ -12,6 +12,7 @@ const {
     create,
     get,
     getById,
+    getTotal,
     update,
     remove,
     getByUserName,
@@ -102,8 +103,15 @@ module.exports = {
         }
     },
     getUsers: async (req, res) => {
+        const page = parseInt(req.query?.page || 1);
+        const limit = parseInt(req.query?.limit || 10);
+        const paging = parseInt((page * limit) - limit);
+
         try {
-            const results = await get();
+            const results = await get(paging, limit);
+            const result_total = await getTotal();
+            const total = result_total.total;
+            const pages = Math.ceil(result_total.total / limit);
             const data = results.map(({
                 Id,
                 UserName,
@@ -125,7 +133,13 @@ module.exports = {
                     mobileNo: MobileNo
                 }
             });
-            return res.status(200).json(data);
+            return res.status(200).json({
+                results: data,
+                page,
+                pages,
+                size: limit,
+                total
+            });
         } catch (err) {
             return res.status(500).send(err.message);
         }
